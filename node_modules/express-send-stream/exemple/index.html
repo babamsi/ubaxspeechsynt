@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Open big file</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body{
+                height: 100%;
+            }
+            
+            #code{
+                position: fixed;
+                width: calc(100% - 15px);
+                left: 5px;
+                right: 5px;
+                bottom: 35px;
+                top: 5px;
+                margin: auto;
+                border: 1px solid #000;
+                overflow-x: auto;
+            }
+            
+            .progress-bar{
+                position: fixed;
+                width: calc(100% - 10px);
+                left: 5px;
+                right: 5px;
+                bottom: 5px;
+                height: 20px;
+                border: 1px solid #000;
+            }
+            
+            .progress{
+                background-color: #FF0000;
+                width: 0%;
+                height: 20px
+            }
+        </style>
+    </head>
+    <body>
+        <div id="code"></div>
+        <div class="progress-bar">
+            <div class="progress"></div>
+        </div>
+        
+        <script type="text/javascript" src="ace/ace.js"></script>
+        <script type="text/javascript">                  
+            var xhr = new XMLHttpRequest();
+            xhr.overrideMimeType("application/octet-stream");
+            xhr.responseType = "arraybuffer";
+            
+            xhr.onprogress = function(progress){
+                document.querySelector(".progress").style.width = ((progress.loaded*100)/parseInt(xhr.getResponseHeader("File-size"))) + "%";
+            };
+            
+            xhr.onload = function(v){
+                var byteArray = new Uint8Array(xhr.response);
+                renderStream(1, byteArray.byteLength, byteArray, 524288, "#code");
+            };
+
+            xhr.onerror = function (e) {
+                console.log(e);
+            };
+                    
+            xhr.open("GET", "/open", true);
+            xhr.send();
+            
+            function renderStream(byteStart, byteLength, byteArray, byteBlock, elem){
+                var blockString = "";
+                
+                if(byteStart+byteBlock > byteLength)
+                    byteBlock = (byteLength - byteStart)-1;
+                                                
+                for (var i = byteStart; i <= (byteStart+byteBlock); i++)
+                    blockString += String.fromCharCode(byteArray[i]);
+                        
+                document.querySelector(elem).appendChild(document.createTextNode(blockString));
+                document.querySelector(".progress").style.width = ((byteStart+byteBlock)*100)/(byteLength-1) + "%";
+                //console.log(byteStart,(byteStart+byteBlock),byteLength,(((byteStart+byteBlock)*100)/(byteLength-1) + "%"));
+                
+                if(byteStart+byteBlock < byteLength-1)
+                    setTimeout(renderStream, 200, (byteStart+byteBlock)+1, byteLength, byteArray, byteBlock, elem);  
+                else{
+                    var editor = ace.edit("code");
+                    editor.setTheme("ace/theme/twilight");
+                    editor.session.setMode("ace/mode/xml");
+                }
+            }
+        </script>
+    </body>
+</html>

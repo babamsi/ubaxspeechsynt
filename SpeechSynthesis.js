@@ -99,7 +99,7 @@ app.get('/sound', (req, res) => {
         "Content-Type": "audio/mp3",
     };
     // res.writeHead(206, headers);
-    const videoStream = fs.createReadStream(videoPath, { start, end });
+    const videoStream = fs.createReadStream(videoPath);
     videoStream.pipe(res);
     console.log('requested file success')
 })
